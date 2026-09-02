@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b10">
+  <title>Digital Pallet — {{ tag }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='iso.css') }}">
+</head>
+<body class="{{ 'camera-disabled' if not camera_enabled else '' }}" data-cam-id="{{ cam_id }}" data-az0="{{ az0 }}" data-el0="{{ el0 }}"
+      data-view="{{ view_mode }}" data-camera-enabled="{{ 'true' if camera_enabled else 'false' }}">
+  {% include "components/camera_header.html" %}
+
+  <main id="contenido">
+    {% include "components/video_panel.html" %}
+    <div id="camera-state-overlay" class="camera-state-overlay" aria-live="polite"></div>
+    {% include "components/iso_panel.html" %}
+  </main>
+
+  <script src="{{ url_for('static', filename='iso.js') }}"></script>
+</body>
+</html>

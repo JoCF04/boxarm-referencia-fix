@@ -1,0 +1,59 @@
+﻿# configs/drawing.yaml
+# Colores y layout de las anotaciones sobre el frame (ROI, cajas, HUD).
+# Separado de pipeline.yaml porque es "como se ve", no "como se procesa".
+# Colores en formato BGR (OpenCV), no RGB.
+
+colors:
+  new:        [0, 255, 0]      # verde -> caja nueva confirmada
+  redet:      [255, 200, 0]    # amarillo -> re-deteccion de caja ya contada
+  pending:    [0, 0, 255]      # rojo -> rechazada / fuera de rango
+  roi:        [255, 200, 0]
+  text:       [255, 255, 255]
+  hud_title:  [0, 210, 255]
+  arm_alert:  [0, 80, 255]
+
+roi:
+  thickness: 2
+
+box:
+  thickness: 2
+  label_font_scale: 0.55
+  label_thickness: 2
+  circle_radius: 4
+
+arm_alert:
+  font_scale: 0.7
+  thickness: 2
+
+hud:
+  width: 300      # entra "Clase : coin_roll_100" sin cortarse
+  height: 244     # + clase activa, desglose por nivel (N0/N1/..) y fps camara vs fps inferencia
+  background: [20, 20, 20]
+  title_font_scale: 0.75
+  title_thickness: 2
+  line_font_scale: 0.85
+  line_thickness: 2        # linea "Colocadas"
+  visible_thickness: 1     # linea "Visibles"
+  fps_font_scale: 0.75
+  fps_thickness: 1
+
+# Paleta 3D dibujada en la vista de inspeccion (/cam/<id>/iso). Aca vive solo
+# el ASPECTO -- la geometria (las 4 esquinas del deck) es calibrada y por
+# camara: sale de configs/roi_cam_<id>.json campo "pallet_roi.normalized", que
+# escribe scripts/calibrate_roi.py. Un unico bloque de esquinas global solo
+# podia estar bien para una de las camaras.
+#
+# streaming.py proyecta esas esquinas con build_homography(cam.roi) +
+# _project() -- la homografia REAL de esa camara, el mismo camino que recorre
+# el bbox de cada caja en scene.py. El resultado sale de proyectar, no se
+# asume un cuadrado unidad de antemano.
+pallet:
+  visible: true      # false = oculta la geometria de la paleta, no las cajas
+  # Fraccion del tamano REAL del pallet (min(ancho,alto) del pallet_roi
+  # proyectado) -- NO metros, el nombre "_m" es historico. Antes se aplicaba
+  # sobre el dominio [0,1] completo de la caja y el deck se veia enorme
+  # apenas el pallet_roi quedaba mas chico que ese dominio.
+  deck_thickness_m: 0.02
+  board_gap_m: 0.012
+  support_height_m: 0.03
+  support_width_m: 0.065

@@ -1,0 +1,55 @@
+site_name: CNM-Robotic_Box_Arm — Documentacion
+site_description: Vision artificial para conteo y verificacion de cajas en pallets
+site_author: CNM-Robotic_Box_Arm
+
+theme:
+  name: material
+  language: es
+  palette:
+    scheme: slate
+    primary: indigo
+    accent: cyan
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+    - content.code.annotate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - admonition
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Docker (Jetson): docker.md
+  - Source:
+      - Main: main.md
+      - boxarm:
+          - Overview: src/boxarm/index.md
+          - config: src/boxarm/config.md
+          - vision:
+              - counting: src/boxarm/vision/counting.md
+              - palletizing: src/boxarm/vision/palletizing.md
+              - drawing: src/boxarm/vision/drawing.md
+              - isometric: src/boxarm/vision/isometric.md
+              - inference: src/boxarm/vision/inference.md
+          - capture:
+              - camera_io: src/boxarm/capture/camera_io.md
+          - runtime:
+              - workers: src/boxarm/runtime/workers.md
+              - pipeline: src/boxarm/runtime/pipeline.md
+          - web:
+              - streaming: src/boxarm/web/streaming.md
+  - Configs:
+      - Pipeline: configs/pipeline.md
+      - Tracking: configs/tracking.md
+      - Drawing: configs/drawing.md
+      - Palletizing: configs/palletizing.md
+  - Palletizing:
+      - Documento: palletizing_counting.md
+  - Known issues: known_issues.md

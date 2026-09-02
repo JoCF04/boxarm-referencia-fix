@@ -1,0 +1,16 @@
+{# Panel de video en vivo (MJPEG anotado). El <img> arranca sin src -- iso.js
+   solo la asigna si la vista actual la necesita (ver NECESITA_VIDEO), para
+   no pedirle el stream al servidor cuando queda oculto (vista "iso"). #}
+<section id="camara" aria-label="video en vivo de {{ tag }}">
+  <div class="video-marco">
+    <img id="camera-stream" data-src="/cam/{{ cam_id }}/stream" alt="video en vivo de {{ tag }}">
+    <div id="camera-loading" class="camera-loading" role="status" aria-live="polite">
+      <span>CARGANDO</span><span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+    <div class="video-zoom" aria-label="controles de zoom del video">
+      <button id="video-zoom-out" type="button" aria-label="Alejar video">−</button>
+      <button id="video-zoom-reset" type="button">RESET</button>
+      <button id="video-zoom-in" type="button" aria-label="Acercar video">+</button>
+    </div>
+  </div>
+</section>

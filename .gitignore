@@ -1,0 +1,27 @@
+
+.agents/
+AGENTS.md
+CLAUDE.md
+
+*.avi
+*.mp4
+*.jpg
+*.png
+*.json
+*.pt
+*.txt
+*.pyc
+*.log
+
+datasets/
+runs/
+*.local
+
+**/.ipynb_checkpoints/
+!docker/requirements_container.txt
+
+# Referencias de calibracion de color: se versionan deliberadamente.
+!data/ref/
+!data/ref/**
+!configs/
+!configs/**

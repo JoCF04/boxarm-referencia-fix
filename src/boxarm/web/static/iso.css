@@ -1,0 +1,308 @@
+:root {
+  color-scheme: dark;
+  --bg: #070b10;
+  --panel: rgba(12, 19, 27, 0.9);
+  --line: rgba(117, 167, 196, 0.18);
+  --line-hot: rgba(111, 182, 216, 0.42);
+  --text: #e7edf2;
+  --muted: #778896;
+  --accent: #7cc3e4;   /* cian APAGADO: el brillo pleno vive solo en el borde del pallet, dentro del canvas */
+  --ok: #6fc9a0;
+}
+
+* { box-sizing: border-box; }
+
+html, body { width: 100%; height: 100%; }
+
+body {
+  background:
+    radial-gradient(circle at 50% -20%, rgba(36, 104, 137, 0.16), transparent 42%),
+    var(--bg);
+  color: var(--text);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#barra {
+  min-height: 76px;
+  padding: 12px 18px;
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) auto minmax(260px, 1fr);
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(180deg, rgba(14, 21, 29, 0.98), rgba(9, 15, 22, 0.94));
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.28);
+  z-index: 2;
+}
+
+.marca { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.marca-icono {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-hot);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: inset 0 0 18px rgba(67, 211, 255, 0.08), 0 0 18px rgba(67, 211, 255, 0.06);
+}
+.marca-icono::before,
+.marca-icono::after {
+  content: "";
+  position: absolute;
+  background: var(--accent);
+  opacity: 0.75;
+}
+.marca-icono::before { width: 14px; height: 1px; left: 9px; top: 16px; }
+.marca-icono::after { width: 1px; height: 14px; left: 16px; top: 9px; }
+.marca strong { display: block; font-size: 14px; letter-spacing: 0.16em; white-space: nowrap; }
+.eyebrow { display: block; margin-bottom: 3px; color: var(--muted); font: 600 9px/1 monospace; letter-spacing: 0.22em; }
+
+.telemetria { display: flex; align-items: stretch; gap: 8px; }
+.estado-camara,
+.metrica {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.018);
+  border-radius: 8px;
+}
+.estado-camara { display: flex; gap: 7px; align-items: center; font-size: 11px; letter-spacing: 0.05em; }
+.estado-camara i,
+#estado i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px rgba(93, 224, 163, 0.65); }
+.estado-camara span { color: var(--ok); font: 700 9px monospace; }
+.metrica { min-width: 82px; }
+.metrica small { display: block; color: var(--muted); font: 700 8px monospace; letter-spacing: 0.14em; }
+.metrica span { display: block; margin-top: 3px; font: 500 15px monospace; }
+.metrica b { color: var(--accent); font-weight: 500; }
+
+.vistas { justify-self: end; display: flex; gap: 5px; padding: 4px; border: 1px solid var(--line); border-radius: 9px; }
+/* Controles de capa, explosion y reset de vista. Las vistas direccionales
+   siguen disponibles desde el widget de brujula/cubo sobre el canvas. */
+.capa { border-radius: 6px; color: var(--accent); min-width: 112px; }
+.capa:last-child { min-width: 96px; }
+button {
+  appearance: none;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 11px;
+  font: 700 9px monospace;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+button:hover { color: var(--text); background: rgba(255, 255, 255, 0.045); }
+button:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+button.activa { color: #dff8ff; background: rgba(67, 211, 255, 0.12); box-shadow: inset 0 0 0 1px rgba(67, 211, 255, 0.18); }
+
+#contenido {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(320px, 38%) minmax(0, 1fr);
+  gap: 1px;
+  background: var(--line);
+}
+
+/* La misma página sirve como componente embebido del dashboard. El renderer
+   ISO no cambia: solo se cambia qué superficie ocupa el layout. */
+/* El panel visible es el unico grid item (el otro esta en display:none), asi
+   que ademas de la columna hay que darle TODAS las filas: bajo el media query
+   de 900px las filas son minmax(190px, 36%) / 1fr y el auto-placement lo
+   dejaba en la primera -- el ISO ocupaba un tercio del panel y el resto
+   quedaba vacio. */
+body[data-view="iso"] #camara { display: none; }
+body[data-view="iso"] #lienzo { grid-column: 1 / -1; grid-row: 1 / -1; }
+body[data-view="camera"] #lienzo { display: none; }
+body[data-view="camera"] #camara { grid-column: 1 / -1; grid-row: 1 / -1; }
+.camera-state-overlay { display: none; }
+/* La pagina siempre se consume embebida en una tarjeta del dashboard, que ya
+   muestra tag/estado en su propio encabezado -- marca y telemetria aqui
+   serian el mismo dato repetido, asi que se ocultan. */
+.marca, .telemetria { display: none; }
+#barra { min-height: 46px; padding: 5px 10px; display: flex; justify-content: flex-end; }
+.vistas { border: 0; }
+body.camera-disabled .camera-loading,
+body.camera-disabled .iso-loading { display: none; }
+body.camera-disabled .video-marco img { filter: blur(12px) grayscale(1); opacity: .28; }
+body.camera-disabled #lienzo canvas { filter: blur(12px) grayscale(1); opacity: .28; }
+
+#camara {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  background: #080d13;
+}
+
+.video-marco {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-hot);
+  border-radius: 8px;
+  background: #030507;
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.55), 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+.video-marco img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  transform: scale(1);
+  transform-origin: center center;
+  transition: transform 150ms ease;
+}
+
+.video-marco.arrastrando img { transition: none; }
+
+.camera-loading,
+.iso-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--accent);
+  background: rgba(3, 5, 7, 0.88);
+  font: 700 10px monospace;
+  letter-spacing: 0.16em;
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+.camera-loading.oculto {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.iso-loading {
+  z-index: 4;
+}
+.iso-loading.oculto {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.puntos { display: inline-flex; gap: 4px; align-items: center; }
+.puntos i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: punto-saltar 900ms ease-in-out infinite;
+}
+.puntos i:nth-child(2) { animation-delay: 140ms; }
+.puntos i:nth-child(3) { animation-delay: 280ms; }
+@keyframes punto-saltar {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .puntos i { animation: none; opacity: 0.8; }
+}
+
+.video-zoom {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(7, 12, 18, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.video-zoom button {
+  min-width: 28px;
+  padding: 6px 7px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.video-zoom button:nth-child(2) {
+  min-width: 48px;
+  font-size: 8px;
+}
+
+#lienzo {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  /* Sin retícula CSS: el canvas ya pinta su propio fondo cosmico y su grid
+     proyectado en 3D -- superponer una cuadricula 2D fija los cruzaba y
+     rompia la sensacion de profundidad al orbitar. */
+}
+#lienzo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 48%, transparent 55%, rgba(4, 7, 11, 0.28) 100%);
+}
+#lienzo.girando { cursor: grabbing; }
+
+#iso {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (max-width: 900px) {
+  #barra { grid-template-columns: 1fr auto; min-height: auto; }
+  .telemetria { order: 3; grid-column: 1 / -1; justify-content: center; }
+  .vistas { justify-self: end; }
+  #contenido { grid-template-columns: 1fr; grid-template-rows: minmax(190px, 36%) minmax(0, 1fr); }
+  #camara { padding: 10px; }
+}
+
+@media (max-width: 560px) {
+  #barra { padding: 10px; gap: 10px; }
+  .marca strong { font-size: 11px; }
+  .vistas button { padding: 7px 6px; font-size: 8px; }
+  .estado-camara { display: none; }
+  .ayuda { display: none; }
+}
+
+/* Leyenda de aristas: sobre el canvas, esquina inferior izquierda. Los
+   colores replican ARISTAS_NIVEL de iso.js -- si se cambian alla, cambiarlos
+   aqui. */
+.iso-leyenda {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 14px;
+  font: 700 9px monospace;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 1;  /* por encima de la vineta #lienzo::after */
+}
+.iso-leyenda li { display: flex; align-items: center; gap: 6px; }
+.iso-leyenda i { width: 14px; height: 2px; border-radius: 1px; }
+.iso-leyenda .par { background: rgb(110, 200, 255); }
+.iso-leyenda .impar { background: rgb(255, 196, 92); }

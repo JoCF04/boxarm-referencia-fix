@@ -1,0 +1,113 @@
+# configs/pipeline.yaml
+# Captura, streaming y camaras para main.py. Deteccion frame-a-frame vive en
+# configs/vision.yaml; colores/layout de dibujado en configs/drawing.yaml.
+# Editar aqui, nunca hardcodear en el .py.
+
+modo: camera         # En Windows usa el video configurado en cada camara; "camera" requiere /dev/videoN (Jetson/Linux).
+loop_video: false   # solo aplica con modo: video -- al terminar el video el reader para, no reinicia
+
+device: cuda
+fps_request: 30
+cap_width: 1280
+cap_height: 720
+
+# Los pesos YOLO son YOLO26: necesitan ultralytics 8.4+ en el contenedor
+# (ver docker/requirements_container.txt). Con 8.3.63 la carga muere en
+# AttributeError: E2ELoss. Cada modelo (brazo, cajas) declara su propio
+# archivo en vision.yaml -- no hay un unico "weights" aca porque ya no es
+# un solo modelo multiclase (ver comentario en vision.yaml).
+
+# Host/puerto/calidad JPEG del servidor web viven en configs/web.yaml, no aca.
+
+# Timeouts y reconexion de captura/streaming/apagado. Nada de deteccion o
+# deteccion aqui -- eso vive en vision.yaml.
+runtime:
+  reconnect_delay_s: 2       # espera antes de reintentar abrir una camara caida
+  read_fail_delay_s: 1       # espera antes de reintentar tras un fallo de lectura
+  gst_timeout_s: 2.0         # timeout de try_pull_sample en el appsink de GStreamer
+  mjpeg_poll_s: 0.02          # intervalo de poll del generador MJPEG mientras no hay frame
+  drain_timeout_s: 0.5        # timeout de lectura de la cola JPEG entre procesos
+  shutdown_join_timeout_s: 3  # timeout al unir hilos/procesos en el apagado
+  main_loop_tick_s: 1.0       # intervalo del loop principal esperando Ctrl+C
+  camera_restart_delay_s: 3   # espera antes de relanzar un proceso-camara caido
+  max_camera_restarts: 5      # relanzamientos por camara antes de darla por perdida (0 = no relanzar)
+  fps_log_interval_s: 10      # cada cuanto se loguea captura/inferencia y el reparto de tiempo (0 = nunca)
+
+# Grabacion opcional por tipo. `iso` y `dashboard` se capturan desde Chromium:
+# son EXACTAMENTE el canvas bonito y el panel completo que se ven en /cam/<id>,
+# no el raster ISO legado de OpenCV.
+recording:
+  enabled: false
+  output_dir: data
+  fps: 10.0
+  fourcc: mp4v
+  extension: mp4
+  # OpenCV en Windows no trae encoder H.264 (falta openh264.dll con licencia
+  # aparte), asi que se graba en mp4v y, si ffmpeg esta instalado, se
+  # reencodea a H.264 al cerrar el archivo -- eso es lo que hace falta para
+  # que WhatsApp (y la mayoria de apps de chat) puedan previsualizar/abrir
+  # el video en vez de rechazarlo. Si no hay ffmpeg en PATH, se deja el
+  # mp4v tal cual (se loguea una sola vez, no rompe la grabacion).
+  transcode_h264: true
+  transcode_timeout_s: 900.0  # Ctrl+C espera la conversion final de ISO/dashboard
+  types:
+    normal: true
+    iso: true
+    dashboard: true
+  dashboard:
+    capture_host: "127.0.0.1"  # destino navegable de Chromium; NO usar 0.0.0.0
+    azimuth_deg: 55.0           # angulo SOLO del Chromium que graba
+    elevation_deg: 23.0
+    width: 1920
+    height: 900
+    jpeg_quality: 85
+    startup_timeout_s: 30.0
+
+# El orden de esta lista define el <id> de /cam/<id> (1, 2, 3, ...) -- es
+# la POSICION en esta lista, no el "index" de abajo (que es el /dev/videoN
+# fisico). Son dos numeros independientes. El orden del <id> no cambia
+# aunque desactives una camara -- si desactivas la Camara 1, sigue
+# siendo /cam/1 (no se corre el numerado de las que quedan).
+# El ROI de deteccion y las esquinas de la paleta NO se declaran aca: cada
+# camara los toma de configs/roi_cam_<id>.json (campos main_roi.normalized y
+# pallet_roi.normalized), el archivo que escribe
+# `python scripts/calibrate_roi.py --camera <id>`. El <id> es el mismo de
+# /cam/<id>, o sea la posicion en esta lista.
+# El tramo del video de cada camara se recorta con video_start_s/video_end_s
+# (segundos, solo modo: video). Ambos son opcionales y valen 0 por defecto:
+# 0 de inicio = desde el principio, 0 de fin = hasta que acabe el archivo.
+camaras:
+  # persist_state: true  -> la paleta se guarda en state/pallets/camera_<id>.json
+  #                         y se restaura al reiniciar (operacion real, continuar
+  #                         una paleta a medio armar tras un corte).
+  # persist_state: false -> arranca siempre vacia: ni lee el snapshot existente
+  #                         ni escribe uno. Es lo que corresponde al reproducir
+  #                         videos de prueba, donde el estado de una corrida
+  #                         anterior falsea el conteo de la siguiente.
+  - index: 0          # /dev/video0 -- camara real (los nodos impares son metadata UVC)
+    tag: "Camara 1"    # -> /cam/1
+    video: videos/0.50_1/cam-0-20260826_142606.mp4
+    video_start_s: 0  # segundo donde arranca este video (0 = desde el inicio)
+    video_end_s: 0      # segundo donde corta (0 = hasta el final del archivo)
+    enabled: true
+    persist_state: false
+  - index: 2          # /dev/video2 -- camara real (/dev/video1 es metadata, no captura)
+    tag: "Camara 2"    # -> /cam/2
+    video: videos/p010soles.avi
+    video_start_s: 100
+    video_end_s: 0
+    enabled: true
+    persist_state: false
+  - index: 4          # /dev/video4 -- camara real (/dev/video3 es metadata, no captura)
+    tag: "Camara 3"    # -> /cam/3
+    video: videos/0.10/b0.10.mp4
+    #video: videos/1.00/p4r1.mp4
+    video_start_s: 0
+    video_end_s: 0
+    # >1.0 = mas rapido que tiempo real (solo modo: video, no afecta camara
+    # en vivo). Sirve para no esperar los minutos reales de un video de
+    # prueba largo -- el modelo sigue viendo cada frame igual, solo cambia
+    # cuanto espera el lector entre uno y el siguiente.
+    video_speed: 1.0
+    enabled: false
+    persist_state: false

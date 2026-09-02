@@ -1,0 +1,12 @@
+# configs/web.yaml
+# Todo lo que es servidor/transporte HTTP para el dashboard y el streaming
+# de camaras. Separado de pipeline.yaml (captura/deteccion) para no mezclar
+# "como se ve la camara" con "como corre la deteccion".
+
+flask_host: "0.0.0.0"
+port: 8080          # unico puerto web -- cada camara se sirve en /cam/<id>
+jpeg_quality: 55     # 0-100 (OpenCV clampea fuera de rango). Con 3 camaras en
+                     # vivo el ancho de banda se acumula y el stream se traba;
+                     # 55 sigue siendo legible y pesa bastante menos que 85-100
+stream_max_fps: 8.0  # solo transmision MJPEG al navegador; no frena captura,
+                     # inferencia ni conteo. A ~95 KB/frame son ~6.1 Mbit/s.

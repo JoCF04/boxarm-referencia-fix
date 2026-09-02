@@ -1,0 +1,66 @@
+{# Layout de 3 camaras como piezas de rompecabezas que encastran -- porte
+   directo de scripts/scratch/scratch_shape.html (version responsive, todo
+   en % del propio .puzzle, sin calc()/min() anidados en el clip-path: eso
+   fue lo que rompio el intento anterior, un navegador que invalida una
+   parte del valor tira TODO el clip-path sin avisar).
+   cameras[0] = pieza roja (grande, izquierda); cameras[1] = naranja (arriba
+   derecha); cameras[2] = azul (abajo derecha). Cada pieza tiene un slot
+   "big" (el iso/video de esa camara) y un slot "small" (info/conteo de esa
+   MISMA camara, nunca de otra) -- son hermanos de las piezas, posicionados
+   en el mismo sistema de coordenadas de .puzzle. #}
+{% macro puzzle_head(camera) %}
+<div class="card-heading">
+  <span class="card-index">0{{ camera.id }}</span><strong>{{ camera.tag }}</strong>
+  <span class="card-status pending">CARGANDO</span>
+</div>
+{% endmacro %}
+
+{% macro puzzle_conteo() %}
+<div class="card-conteo">
+  <div class="conteo-resumen"><span class="conteo-total">-</span><small>CAJAS</small></div>
+  <div class="conteo-detalle"></div>
+  <div class="conteo-niveles"></div>
+  <div class="conteo-clases"></div>
+</div>
+{% endmacro %}
+
+<div class="puzzle-scene">
+  <div id="camera-grid" class="camera-grid puzzle-grid">
+    <div class="piece piece-cam1" aria-hidden="true"></div>
+    <div class="piece piece-cam2" aria-hidden="true"></div>
+    <div class="piece piece-cam3" aria-hidden="true"></div>
+
+    <article class="puzzle-card slot big cam1-slot-big" data-camera-id="{{ cameras[0].id }}">
+      <div class="viewport">
+        <iframe title="{{ cameras[0].tag }}" src="/cam/{{ cameras[0].id }}?view=iso" loading="eager"></iframe>
+        <div class="card-overlay"></div>
+      </div>
+    </article>
+    <aside class="puzzle-info slot small cam1-slot-small" data-camera-id="{{ cameras[0].id }}">
+      {{ puzzle_head(cameras[0]) }}
+      {{ puzzle_conteo() }}
+    </aside>
+
+    <aside class="puzzle-info slot small cam2-slot-small" data-camera-id="{{ cameras[1].id }}">
+      {{ puzzle_head(cameras[1]) }}
+      {{ puzzle_conteo() }}
+    </aside>
+    <article class="puzzle-card slot big cam2-slot-big" data-camera-id="{{ cameras[1].id }}">
+      <div class="viewport">
+        <iframe title="{{ cameras[1].tag }}" src="/cam/{{ cameras[1].id }}?view=iso" loading="eager"></iframe>
+        <div class="card-overlay"></div>
+      </div>
+    </article>
+
+    <aside class="puzzle-info slot small cam3-slot-small" data-camera-id="{{ cameras[2].id }}">
+      {{ puzzle_head(cameras[2]) }}
+      {{ puzzle_conteo() }}
+    </aside>
+    <article class="puzzle-card slot big cam3-slot-big" data-camera-id="{{ cameras[2].id }}">
+      <div class="viewport">
+        <iframe title="{{ cameras[2].tag }}" src="/cam/{{ cameras[2].id }}?view=iso" loading="eager"></iframe>
+        <div class="card-overlay"></div>
+      </div>
+    </article>
+  </div>
+</div>

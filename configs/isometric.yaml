@@ -1,0 +1,25 @@
+# configs/isometric.yaml
+# Vista de inspeccion 3D (docs/palletizing_counting.md seccion 10) --
+# solo diagnostico visual, no afecta el conteo (eso vive en
+# configs/palletizing.yaml). Se sirve en /cam/<id>/iso, solo produce algo
+#
+# El footprint en X,Y ("a","b") se mide desde cada bbox detectado y se
+# normaliza para toda la carga con la mediana del lado largo y corto.
+# Cada caja conserva su orientacion; la mediana rechaza ruido y oclusion.
+# Z no es observable desde ese bbox:
+# el render usa solo una proporcion VISUAL del lado menor, no una altura real.
+#
+# La geometria de la paleta (tamano, soportes) vive en configs/drawing.yaml,
+# no aqui: es un rectangulo de fondo fijo, ajeno al ROI/homografia.
+
+view:
+  azimuth_deg: 45.0      # theta -- isometrica real (A0 de la orbita)
+  elevation_deg: 35.264  # phi -- atan(1/sqrt(2)) = 35.26438968
+  canvas_width: 960
+  canvas_height: 960
+  fill_margin: 0.85     # fraccion del canvas que debe ocupar la escena (pallet + torre completa) -- la escala
+                         # px/m se auto-calcula cada frame a partir de esto, no es un valor fijo a mano
+  level_gap_ratio: 0.35     # vista explotada: separacion leve entre niveles, en fracciones del alto de un nivel
+                            # 0 = apilado a tope (como antes); ~1 = un nivel de aire entre capas
+  visual_height_ratio: 0.6  # extrusion esquematica = ratio * min(box_a, box_b)
+                            # NO es la altura fisica Z ni una medicion del bbox

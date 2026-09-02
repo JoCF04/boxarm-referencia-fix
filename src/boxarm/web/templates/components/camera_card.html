@@ -1,0 +1,20 @@
+{% macro camera_card(camera) %}
+<article class="camera-card" draggable="true" data-camera-id="{{ camera.id }}">
+  <div class="card-heading">
+    <span class="card-index">0{{ camera.id }}</span><strong>{{ camera.tag }}</strong>
+    <span class="card-status pending">CARGANDO</span>
+  </div>
+  <div class="viewport">
+    <iframe title="{{ camera.tag }}" src="/cam/{{ camera.id }}?view=iso" loading="eager"></iframe>
+    <div class="card-overlay"></div>
+  </div>
+  {# Conteo de ESTA camara nomas: total, por nivel y por clase. Poblado por
+     dashboard.js desde /api/cameras (mismo scene que ya ve el iframe). #}
+  <div class="card-conteo">
+    <div class="conteo-resumen"><span class="conteo-total">-</span><small>CAJAS</small></div>
+    <div class="conteo-detalle"></div>
+    <div class="conteo-niveles"></div>
+    <div class="conteo-clases"></div>
+  </div>
+</article>
+{% endmacro %}

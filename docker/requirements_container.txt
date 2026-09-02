@@ -1,0 +1,62 @@
+# -----------------------------------------------------------------------
+# CNM-Robotic_Box_Arm
+# Programmer : gerald
+# Date       : 24-08-26
+# Reason     : Solo lo que este proyecto importa de verdad. torch,
+#              torchvision, numpy y cv2 NO van aqui: ya vienen compilados
+#              contra CUDA en la imagen base y pip los reemplazaria por
+#              wheels de CPU, perdiendo la GPU sin aviso.
+# -----------------------------------------------------------------------
+
+# Configuracion (configs/*.yaml) -- boxarm.config
+pyyaml>=5.3.1
+
+# Servidor de streams MJPEG -- boxarm.web.streaming
+flask>=2.0.0
+
+# Captura exacta del panel web para recording.types.iso/dashboard. Se fija
+# 1.46 porque conserva soporte para Python 3.8 de la imagen JetPack 5.
+playwright==1.46.0
+
+# Dependencias puras de Python de ultralytics. ultralytics se instala aparte
+# con --no-deps en el Dockerfile, asi que su arbol se declara aqui a mano.
+matplotlib>=3.3.0
+pillow>=7.1.2
+requests>=2.23.0
+scipy>=1.4.1
+tqdm>=4.64.0
+psutil
+py-cpuinfo
+thop>=0.1.1
+pandas>=1.1.4
+seaborn>=0.11.0
+filelock>=3.16.1
+nvidia-ml-py>=12.0.0
+ultralytics-thop>=2.1.6
+# polars dejo de publicar wheel cp38 a partir de 1.9: 1.8.2 es el ultimo con
+# cp38-abi3-manylinux_2_24_aarch64. Si aparece un fallo de API de polars al
+# importar ultralytics, es por este techo -- ahi si toca subir a JetPack 6.
+polars==1.8.2
+
+# Asignacion hungara del tracker (botsort/bytetrack) -- sin esto
+# model.track() falla al primer frame con deteciones.
+lapx>=0.5.2
+
+# Jupyter Lab -- modo 1 de docker/build.sh. La base jetson-inference no lo
+# trae (a diferencia de l4t-ml), asi que se instala aqui.
+jupyterlab
+
+# --- se instalan con --no-deps -----------------------------------------------
+# Todo lo que vaya DEBAJO de esta marca lo instala el Dockerfile con --no-deps.
+# ultralytics declara torch, torchvision y opencv-python entre sus
+# dependencias: dejar que pip las resuelva sustituye las builds CUDA de la
+# imagen base por wheels de CPU y se pierde la GPU sin aviso. Su arbol real ya
+# esta declarado arriba.
+#
+# 8.4.x es obligatorio para los pesos YOLO26 de runs/cajas_yolo26m_512_v6: su
+# checkpoint referencia ultralytics.utils.loss.E2ELoss, clase que no existe en
+# 8.3.63 (torch.load muere con AttributeError al deserializar). 8.4.127 declara
+# requires-python >=3.8 y su wheel es py3-none-any, o sea entra en el Python 3.8
+# de esta base de JetPack 5 -- no hace falta cambiar de imagen.
+# Volver a 8.3.63 solo si polars 1.8.2 se queda corto (ver nota arriba).
+ultralytics==8.4.127

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3 piezas responsive</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  :root{
+    /* ======================================================
+       ESCALA GENERAL RESPONSIVE
+       ====================================================== */
+    --page-pad: clamp(12px, 2vw, 28px);
+    --scene-radius: clamp(18px, 2vw, 28px);
+    --piece-radius: clamp(4px, 0.45vw, 8px);
+    --slot-radius: clamp(4px, 0.45vw, 8px);
+
+    /*
+      El rompecabezas conserva su proporción geométrica
+      original: 527 x 300
+    */
+    --puzzle-ratio: 527 / 300;
+
+    /*
+      La escena llena casi toda la pantalla.
+      En pantallas grandes crece bastante.
+    */
+    --scene-w: min(calc(100vw - (2 * var(--page-pad))), 1800px);
+    --scene-h: min(calc(100vh - (2 * var(--page-pad))), 1100px);
+
+    /*
+      El rompecabezas escala dentro de la escena.
+    */
+    --puzzle-w: min(90vw, calc(86vh * 1.7566667), 1500px);
+
+    /* Transparencia de cajas internas */
+    --slot-fill: rgba(255,255,255,.14);
+
+    /* Texto */
+    --big-font: clamp(14px, 1.15vw, 24px);
+    --small-font: clamp(10px, 0.72vw, 16px);
+  }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:var(--page-pad);
+    background:
+      radial-gradient(circle at 30% 20%, #eef2f7 0%, #dfe5ec 46%, #d3dae2 100%);
+    font-family: Arial, sans-serif;
+  }
+
+  .scene{
+    width:var(--scene-w);
+    height:var(--scene-h);
+    position:relative;
+    overflow:hidden;
+    border-radius:var(--scene-radius);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.40), rgba(255,255,255,.18)),
+      #ececec;
+    box-shadow:
+      0 22px 55px rgba(0,0,0,.10),
+      inset 0 1px 0 rgba(255,255,255,.76);
+  }
+
+  .puzzle{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:var(--puzzle-w);
+    aspect-ratio:527 / 300;
+    transform:translate(-50%,-50%);
+  }
+
+  /* ======================================================
+     PIEZAS
+     Cada pieza es UN SOLO polígono
+     ====================================================== */
+
+  .piece{
+    position:absolute;
+    filter:drop-shadow(0 0.8vw 1.2vw rgba(0,0,0,.10));
+  }
+
+  .piece::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    border-radius:var(--piece-radius);
+    background:linear-gradient(145deg, rgba(255,255,255,.10), transparent 42%);
+    opacity:.55;
+  }
+
+  .red{
+    left:0;
+    top:0;
+    width:63.092979%;
+    height:100%;
+    background:linear-gradient(145deg,#cd5d5d 0%, #b83034 78%);
+    clip-path:polygon(
+      0 0,
+      78.313253% 0,
+      78.313253% 33.888889%,
+      100% 33.888889%,
+      100% 66.111111%,
+      78.313253% 66.111111%,
+      78.313253% 100%,
+      0 100%
+    );
+  }
+
+  .orange{
+    left:50.284630%;
+    top:0;
+    width:49.715370%;
+    height:49.166667%;
+    background:linear-gradient(145deg,#ffc55c 0%, #f1a32b 78%);
+    clip-path:polygon(
+      0 0,
+      100% 0,
+      100% 100%,
+      27.480916% 100%,
+      27.480916% 65.536723%,
+      0 65.536723%
+    );
+  }
+
+  .blue{
+    left:50.284630%;
+    top:50.833333%;
+    width:49.715370%;
+    height:49.166667%;
+    background:linear-gradient(145deg,#679dd9 0%, #3973bc 78%);
+    clip-path:polygon(
+      0 34.463277%,
+      27.480916% 34.463277%,
+      27.480916% 0,
+      100% 0,
+      100% 100%,
+      0 100%
+    );
+  }
+
+  /* ======================================================
+     RECTÁNGULOS INTERNOS
+     - sin borde
+     - más transparentes
+     - el pequeño crece a favor del grande
+     ====================================================== */
+
+  .slot{
+    position:absolute;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:clamp(5px, .65vw, 14px);
+    border:none;
+    border-radius:var(--slot-radius);
+    background:var(--slot-fill);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+    z-index:5;
+    color:rgba(255,255,255,.88);
+    user-select:none;
+  }
+
+  .slot.big{
+    font-size:var(--big-font);
+    font-weight:600;
+    line-height:1.14;
+    letter-spacing:.1px;
+  }
+
+  .slot.small{
+    font-size:var(--small-font);
+    font-weight:600;
+    line-height:1.12;
+    letter-spacing:.1px;
+  }
+
+  /* ---------------- RED ---------------- */
+
+  .red-slot-big{
+    left:1.807229%;
+    top:2%;
+    width:47.817837%;
+    height:96%;
+  }
+
+  .red-slot-small{
+    left:49.525617%;
+    top:35.888889%;
+    width:12.333966%;
+    height:28.222222%;
+  }
+
+  /* --------------- ORANGE --------------- */
+
+  .orange-slot-small{
+    left:51.423150%;
+    top:2%;
+    width:12.523719%;
+    height:28.222222%;
+  }
+
+  .orange-slot-big{
+    left:64.136622%;
+    top:2%;
+    width:34.535104%;
+    height:45.166667%;
+  }
+
+  /* ---------------- BLUE ---------------- */
+
+  .blue-slot-small{
+    left:51.423150%;
+    top:69.611111%;
+    width:12.523719%;
+    height:28.222222%;
+  }
+
+  .blue-slot-big{
+    left:64.136622%;
+    top:52.833333%;
+    width:34.535104%;
+    height:45.166667%;
+  }
+
+  /* Pantallas muy pequeñas */
+  @media (max-width: 720px){
+    :root{
+      --puzzle-w: 94vw;
+      --big-font: clamp(11px, 2.25vw, 18px);
+      --small-font: clamp(8px, 1.55vw, 13px);
+    }
+
+    .slot{
+      padding:clamp(3px, .9vw, 8px);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="puzzle">
+
+    <!-- PIEZAS -->
+    <div class="piece red"></div>
+    <div class="piece orange"></div>
+    <div class="piece blue"></div>
+
+    <!-- RECTÁNGULOS INTERNOS + TEXTOS -->
+    <div class="slot big red-slot-big">Aquí va el 3D o cámara</div>
+    <div class="slot small red-slot-small">Aquí va la información o texto :)</div>
+
+    <div class="slot small orange-slot-small">Aquí va la información o texto :)</div>
+    <div class="slot big orange-slot-big">Aquí va el 3D o cámara</div>
+
+    <div class="slot small blue-slot-small">Aquí va la información o texto :)</div>
+    <div class="slot big blue-slot-big">Aquí va el 3D o cámara</div>
+
+  </div>
+</div>
+
+</body>
+</html>

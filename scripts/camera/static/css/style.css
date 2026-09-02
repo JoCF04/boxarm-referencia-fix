@@ -1,0 +1,173 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: #0b0b0b;
+  color: #eee;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 24px 32px;
+  gap: 18px;
+  margin: 0;
+}
+
+h1 {
+  color: #0cf;
+  font-size: 1.4rem;
+  letter-spacing: .05em;
+  margin: 4px 0;
+}
+
+.grid {
+  display: grid;
+  gap: 22px;
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+}
+
+/* con 1 sola cámara, ocupar todo el ancho disponible */
+.grid[style*="--total: 1"] {
+  grid-template-columns: 1fr;
+}
+
+.cam-card {
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.off-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #555;
+  font-size: .9rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.cam-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ddd;
+}
+
+small {
+  color: #888;
+  font-size: .8rem;
+}
+
+.controls {
+  gap: 20px;
+  justify-content: flex-start;
+}
+
+/* toggles: cámara activa / grabar */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle .slider {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+  background: #444;
+  border-radius: 22px;
+  transition: .2s;
+  flex-shrink: 0;
+}
+
+.toggle .slider:before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background: #ccc;
+  border-radius: 50%;
+  transition: .2s;
+}
+
+.toggle input:checked + .slider {
+  background: #0cf;
+}
+
+.toggle input:checked + .slider:before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+.toggle.rec input:checked + .slider {
+  background: #e33;
+}
+
+.toggle input:disabled + .slider {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.toggle:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.toggle-label {
+  font-size: .85rem;
+  color: #aaa;
+}
+
+.toggle input:checked ~ .toggle-label {
+  color: #eee;
+  font-weight: 700;
+}

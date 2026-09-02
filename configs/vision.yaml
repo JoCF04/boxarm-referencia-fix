@@ -1,0 +1,68 @@
+# configs/vision.yaml
+# Inferencia YOLO frame-a-frame. NO hay tracker temporal: la identidad
+# persistente es la ocupacion (celda, nivel), cuyo estado y reglas viven en
+# configs/palletizing.yaml. La capacidad de cada clase sale de los templates.
+# Captura/streaming vive en pipeline.yaml y el gate del robot en
+# palletizing.yaml. Editar configuracion, nunca hardcodear umbrales.
+#
+# Dos modelos, no uno: antes un solo YOLO multiclase mezclaba "brazo" y
+# "caja" en el mismo dataset, y cualquier foto usada para ensenar una caja
+# que tuviera el brazo encima (tapando/con motion blur) contaminaba esa
+# clase con una etiqueta mala. Separados, cada dataset se filtra a lo que
+# le conviene: cajas solo con fotos sin brazo interfiriendo, brazo con
+# TODAS las fotos (incluidas las dificiles, que es justo donde mas
+# importa que acierte). En tiempo de ejecucion no cuesta nada extra: el
+# gate ya descartaba toda caja apenas aparecia brazo, asi que separar el
+# entrenamiento solo formaliza algo que ya estaba separado en la decision.
+
+# Detector del brazo robotico -- 1 clase, presencia simple. Corre primero
+# en cada frame: si detecta brazo, se descarta el frame para conteo (ver
+# gate en palletizing.yaml) y el modelo de cajas ni se ejecuta ese frame.
+arm:
+  weights: models/robotic-arm/robotic-arm.pt
+  imgsz: 512
+  # Antes 0.01/0.08: ese umbral tan bajo era para compensar que "brazo"
+  # convivia con clases de caja en el mismo modelo multiclase y competia
+  # con ellas. Con un detector dedicado de una sola clase ya no hace falta
+  # ese margen artificial -- un umbral razonable no pierde brazos reales
+  # con esta forma/tamano tan consistente.
+  conf: 0.50
+  class_name: robotic_arm
+
+# Detector de cajas -- multiclase, una por denominacion/presentacion.
+# Entrenado solo con fotos donde el brazo no interfiere: no necesita
+# aprender a discriminar bajo oclusion, que es tarea del detector de arriba.
+boxes:
+  weights: models/coin-box/coin-box.pt
+  imgsz: 640
+  # Piso global entregado a YOLO. Debe ser el menor umbral por clase;
+  # despues de inferencia se aplica class_conf por nombre.
+  conf: 0.01
+
+  # Clases por NOMBRE, nunca por id. El id depende del orden del `names:`
+  # del dataset y se corre al agregar etiquetas nuevas; el nombre no. Con
+  # ids, una config vieja seguia "funcionando" (el id existia) pero apuntaba
+  # a otra clase: las cajas de esa denominacion se trataban como brazo,
+  # pausaban el conteo y cerraban ciclos de brazo que nunca ocurrieron.
+  # Un nombre ausente falla ruidosamente al arrancar.
+  #
+  # Faltan etiquetar denominaciones (0.20/2/5) en este dataset: al
+  # sumarlas basta agregar el nombre aca, sin tocar ningun id.
+  class_names:
+    - bag_10
+    - coin_roll_10
+    - coin_roll_50
+    - coin_roll_100
+    - coin_roll_200
+
+  # Umbral minimo por clase. Acepta el NOMBRE de la clase.
+  class_conf:
+    bag_10: 0.45
+    coin_roll_10: 0.45
+    coin_roll_50: 0.45  # misma familia que la 10; subir si aparecen fantasmas
+    coin_roll_100: 0.50
+    coin_roll_200: 0.45  # misma familia que la 10; subir si aparecen fantasmas
+  roi_tolerance_ratio: 0.15  # margen relativo al lado mayor mediano de las cajas
+
+fps_smoothing_alpha: 0.85  # peso del FPS anterior en el promedio movil (0-1)
+subsample_factor: 2        # procesar 1 de cada N frames leidos

@@ -1,0 +1,25 @@
+{# Encabezado de /cam/<id>: marca + telemetria (ocultos por CSS cuando la
+   pagina esta embebida en el dashboard, ver iso.css) mas los controles de
+   capa/orbita que iso.js engancha por id. #}
+<header id="barra">
+  <div class="marca">
+    <span class="marca-icono" aria-hidden="true"></span>
+    <div>
+      <span class="eyebrow">ROBOTIC BOX ARM</span>
+      <strong>DIGITAL PALLET</strong>
+    </div>
+  </div>
+
+  <div class="telemetria" aria-label="telemetría de cámara">
+    <div class="estado-camara"><i></i>{{ tag }} <span id="camera-status">{{ 'DESACTIVADA' if not camera_enabled else ('ISO' if view_mode == 'iso' else 'CARGANDO') }}</span></div>
+    <div class="metrica"><small>AZIMUT</small><span><b id="az">-</b>°</span></div>
+    <div class="metrica"><small>ELEVACIÓN</small><span><b id="el">-</b>°</span></div>
+  </div>
+
+  <nav class="vistas" aria-label="controles de la escena">
+    <button id="capa" class="capa" type="button">TODAS LAS CAPAS</button>
+    <button id="explosion" class="capa activa" type="button">EXPANDIDO</button>
+    <button id="isometrica" class="capa" type="button">ISOMÉTRICA</button>
+    <button id="orbitar" class="capa activa" type="button">ORBITAR</button>
+  </nav>
+</header>

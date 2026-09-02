@@ -1,0 +1,171 @@
+# configs/palletizing.yaml
+# Conteo por rejilla y escala aparente -- ver docs/palletizing_counting.md.
+#
+# Los 4 vertices de la paleta NO se repiten aqui: son "pallet_roi" de
+# configs/roi_cam_<id>.json, uno por camara. Esa es la entrada de la
+# homografia (H), y NO el "main_roi" -- el ROI de deteccion es a proposito
+# mas amplio que la tarima (para no recortar cajas altas), asi que usarlo
+# hacia que el cuadrado unidad fuera un recuadro arbitrario y las
+# distancias de abajo no midieran fracciones de paleta.
+#
+# Solo conteo aqui -- dimensiones reales para el RENDER 3D (pallet/caja
+# en metros, angulos de vista) viven en configs/isometric.yaml, que es
+# un concern puramente visual y no afecta nada de este archivo.
+
+# auto: descubre las posiciones desde los centroides detectados. Es el
+# modo correcto cuando el video puede comenzar con la carga ya armada.
+# La capacidad por nivel se obtiene de templates/box, no de este archivo.
+layout_mode: auto
+
+# Snapshot canonico de la paleta actual, uno por camara. Se escribe solo
+# despues de confirmar una caja y se restaura al reiniciar el proceso.
+state_directory: state/pallets
+
+
+camera:
+  # max(w,h) esperado, en pixeles, de una caja COMPLETA y sin oclusion en
+  # el nivel 0 -- se mide una vez sobre una imagen de calibracion (no se
+  # calibra). Seccion 6.C opcion 1: junto con c_z/box_height define toda
+  # la escalera s(z) sin necesitar distancia focal ni tamano real de caja
+  # por separado.
+  reference_scale_px: 220
+  c_z: 3.0            # altura del centro optico sobre la superficie de la paleta (m)
+  box_height: 0.30    # estimacion/calibracion requerida SOLO por el modelo de niveles; no sale del bbox 2D
+
+thresholds:
+  tau_rung: 0.18    # tolerancia relativa para asignar la escala observada a un peldano de S (seccion 5.B)
+  tau_rec: 0.12     # margen relativo bajo el peldano mas bajo -> se declara recorte, no nivel (5.C)
+  tau_cell: 0.167   # distancia maxima (en [0,1]^2) a la celda declarada mas cercana antes de F2 (11) --
+                     # ajustar segun que tan juntas esten las celdas reales (patron tipo rompecabezas).
+                     # NO acumula entre detecciones -- cada deteccion se compara sola contra la celda
+                     # mas cercana existente; subido de 0.08 porque el tamano/centro etiquetado de una
+                     # caja varia un poco entre ejemplos (mediciones distintas, no error acumulado)
+  tau_overlap: 0.40 # si dos bboxes se cubren >=40% del menor y sus centros estan cerca, hay posible oclusion
+  tau_overlap_center: 0.60 # distancia entre centroides normalizada por el menor lado; evita confundir contacto de bordes con pila
+  tau_cell_overlap: 0.35   # dos cajas de un mismo nivel estan lado a lado, no encimadas: si un footprint
+                           # candidato cubre >=35% del de una celda ya descubierta, es LA MISMA caja
+                           # (bbox recortado que corrio el centroide), no una celda nueva
+
+  # Area minima, relativa a la de la celda que pisa, para aceptar que una
+  # deteccion esta apoyada encima y no que es un fragmento recortado de ella.
+  # NO se exige que la caja de arriba sea mas grande: el conteo se pausa
+  # mientras el brazo esta en escena, asi que las cajas se miden siempre sin
+  # oclusion del brazo y no hay crecimiento por perspectiva observable entre
+  # niveles. Lo unico que se descarta aca es el fragmento claramente menor.
+  min_stack_area_ratio: 0.80
+  min_complete_side_ratio: 0.80 # separa cajas completas (~95 px) de parciales reales de Camara 2 (~60-73 px)
+  max_same_level_overlap: 0.10  # una caja NEW no puede interpenetrar >10% con una vecina del mismo nivel
+
+  # Piso de ruido del marcador visual/log "SOLAPE" en /cam/<id>/iso y en
+  # _log_overlapping_cells(): dos celdas confirmadas que se rozan un poco
+  # por el error normal de bbox/centroide no son un sobreconteo real, asi
+  # que no hace falta pintarlas de rojo. Es SOLO diagnostico -- a
+  # diferencia de max_same_level_overlap (arriba), nunca bloquea contar una
+  # caja NEW ni cambia chi/total.
+  #
+  # 0.15, no 0.10: tras rectificar el conteo contra pallet_roi en vez del
+  # ROI de deteccion (mas amplio), la misma caja fisica mide 1.39x mas en
+  # el cuadrado unidad -- ver la nota de escala en tau_cell -- asi que el
+  # mismo ruido de medicion ahora se ve como un porcentaje de overlap mas
+  # alto sin que haya mas error real.
+  overlap_warn_ratio: 0.15
+
+  # Holgura al reconstruir una caja completa a partir de un recorte. El borde
+  # del fragmento NO fija el borde de la caja: el etiquetado tiene error y el
+  # robot no apoya con precision infinita, asi que el centro admite un
+  # intervalo, no dos posiciones exactas. Tambien decide cuando dos encajes
+  # empatados son "el mismo con ruido" en vez de dos hipotesis distintas.
+  partial_fit_tolerance: 0.028   # 0.02 * 1.39, ver nota de escala en tau_cell
+
+  # Relacion de tamano (lado menor / lado mayor) por encima de la cual dos
+  # bboxes muy solapados se consideran la MISMA caja detectada dos veces, en
+  # vez de una apilada sobre la otra. Una caja de un nivel superior esta mas
+  # cerca de la camara y se ve netamente mas grande, no casi igual.
+  max_duplicate_scale_ratio: 0.85
+
+  # Un hueco cuenta como "cabe una caja" si mide al menos esta fraccion del
+  # footprint de consenso del nivel. Por debajo de 1.0 a proposito: es
+  # conservador para promover. Exigir el 100% haria que un hueco real pero
+  # un poco recortado por ruido de medicion se declarara inexistente, el
+  # nivel se diera por lleno y una re-deteccion se convirtiera en una caja
+  # fantasma en el nivel de arriba.
+  free_gap_ratio: 0.85
+
+  # Fraccion del footprint de una deteccion que tiene que estar sostenida por
+  # el nivel de abajo para considerarla apilada. Se mide contra la UNION de
+  # las celdas de ese nivel, no contra una sola: en un paletizado trabado la
+  # caja de arriba se apoya a caballo entre dos o cuatro de abajo y no
+  # coincide con ninguna. Preguntar "cuanto pisa a su vecina mas cercana"
+  # perdia justo ese caso, que es el normal.
+  # Default estricto. La tolerancia efectiva se deriva genericamente del
+  # error absoluto de raster/localizacion respecto al footprint observado.
+  min_support_coverage: 0.75
+
+  # Cuanto puede moverse el centro de una celda YA CONFIRMADA al corregir una
+  # inicializacion mala. Es un tope duro: antes solo existia la banda muerta
+  # inferior (tau_cell/2) y todo lo que la superaba se aplicaba ENTERO, sin
+  # limite, asi que una identidad confirmada podia saltar hasta la posicion de
+  # otra caja -- se veia como una caja del ISO "moviendose" al apoyar una nueva
+  # encima. Un desplazamiento mayor a esto no es un centro mal inicializado:
+  # es OTRA caja, y la correccion se descarta.
+  #
+  # Un nivel que llego a su capacidad ademas queda CONGELADO: sus cajas no se
+  # mueven ni giran mas, pase lo que pase.
+  #
+  # Define la ventana util completa: por debajo de la mitad de este valor es
+  # jitter y se ignora; por encima del valor es otra caja y se descarta.
+  #   jitter < 0.028  |  correccion 0.028 .. 0.056  |  otra caja > 0.056
+  max_position_correction: 0.056  # 1/3 de tau_cell (0.167), ver nota de escala ahi
+
+  # Balance relativo default de los dos apoyos dominantes s1 >= s2. La
+  # tolerancia efectiva usa la misma incertidumbre geometrica relativa.
+  # No es un minimo individual; evita declarar nivel i+1 cuando la caja
+  # coincide casi por completo con una sola caja del nivel i.
+  max_support_ratio: 2.0
+
+
+# Resolucion del mapa de ocupacion del cuadrado unidad usado para decidir
+# si un nivel esta lleno. 200x200 sobre una paleta de 1 m da 5 mm por
+# celda: mas fino que el ruido del bbox, y el chequeo sigue siendo un par
+# de operaciones vectorizadas.
+occupancy_grid: 200
+
+# Limite de seguridad al producto cartesiano de hipotesis de reconciliacion
+# inicial (bootstrap N_i/N_(i+1)). Un recorte sin encaje se excluye de la
+# combinatoria en vez de abortar el frame entero, pero eso puede dejar
+# muchos recortes SI encajando con varias hipotesis cada uno -- el producto
+# de todos ellos puede explotar (docenas de recortes x varias hipotesis =
+# millones de combinaciones) y colgar el proceso probandolas una por una.
+# Por encima de este limite, el frame se trata como "aun sin resolver" y se
+# reintenta en el siguiente (la escena se estabiliza cuadro a cuadro).
+max_bootstrap_combinations: 20000
+
+# Confirmacion corta de una CAJA CANDIDATA antes de volverla estado
+# persistente. No pertenece a YOLO: conf/imgsz controlan el detector;
+# estas dos reglas controlan cuando una observacion ya puede contarse.
+# Tras confirmar, la identidad definitiva es (celda, nivel), no este IoU.
+confirmation:
+  min_stable: 3       # frames COUNTING consecutivos para cualquier hipotesis geometrica; usa mediana
+  same_box_iou: 0.25  # IoU minimo para enlazar la candidata entre esos frames
+
+# Cuando el cerebro tiene permiso para contar. Esto NO es config del
+# inferencia: decide si un frame se valida o descarta, una decision
+# de paletizado. Pausar por movimiento es distinto a detectar la clase
+# "brazo": si algo se mueve pero YOLO no lo llama brazo, igual se bloquea
+# el conteo hasta que la escena quede quieta unos frames.
+gate:
+  motion_pause_enabled: true
+  motion_diff_threshold: 6.0  # cambio promedio de gris en ROI; subir si hay ruido/luz parpadeando
+  motion_stable_frames: 3     # frames quietos consecutivos antes de volver a validar cajas
+  arm_debounce_frames: 3      # frames consecutivos sin brazo antes de declarar cerrado el ciclo.
+                              # Sin esto un solo frame perdido cerraba el ciclo y habilitaba otra caja.
+
+  # Frames COUNTING seguidos sin NINGUNA deteccion, habiendo cajas ya
+  # confirmadas, antes de asumir que sacaron toda la carga de la paleta y
+  # resetear el conteo para la paleta siguiente (GridCounter.reset_pallet()).
+  # Mismo orden que motion_stable_frames a proposito: una oclusion momentanea
+  # (alguien parado adelante, un reflejo) no debe leerse como un vaciado real,
+  # pero tampoco hace falta esperar mucho mas que eso -- ya con el gate en
+  # COUNTING la escena esta quieta.
+  empty_pallet_debounce_frames: 3
+

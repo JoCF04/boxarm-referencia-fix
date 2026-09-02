@@ -1,0 +1,17 @@
+{# Panel del gemelo digital 3D. El polling de /iso/scene solo arranca si la
+   vista actual lo necesita (ver NECESITA_ISO en iso.js): no tiene sentido
+   pedirle la escena al servidor cuando este panel queda oculto (vista
+   "camera"). #}
+<section id="lienzo" aria-label="pallet digital interactivo">
+  <canvas id="iso" aria-label="gemelo digital interactivo del pallet"></canvas>
+  <div id="iso-loading" class="iso-loading" role="status" aria-live="polite">
+    <span>CARGANDO ISO</span><span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span>
+  </div>
+  {# La arista de cada caja alterna de color por paridad de nivel (ver
+     ARISTAS_NIVEL en iso.js). Sin esta leyenda el ambar se confunde con el
+     ambar de "confirmando", que significa otra cosa. #}
+  <ul class="iso-leyenda" aria-label="leyenda de aristas">
+    <li><i class="par" aria-hidden="true"></i>NIVEL PAR</li>
+    <li><i class="impar" aria-hidden="true"></i>NIVEL IMPAR</li>
+  </ul>
+</section>

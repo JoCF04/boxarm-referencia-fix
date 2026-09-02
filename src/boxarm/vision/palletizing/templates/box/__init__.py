@@ -1,0 +1,20 @@
+"""Templates organizados por classe de caja/producto."""
+
+from .coin_roll_10 import COIN_ROLL_10_PATTERN_A, COIN_ROLL_10_PATTERN_B
+from .bag_10 import BAG_10_PATTERN_A, BAG_10_PATTERN_B
+from .coin_roll_100 import COIN_ROLL_100_PATTERN_A, COIN_ROLL_100_PATTERN_B
+from .coin_roll_200 import COIN_ROLL_200_PATTERN_A, COIN_ROLL_200_PATTERN_B
+from .coin_roll_50 import COIN_ROLL_50_PATTERN_A, COIN_ROLL_50_PATTERN_B
+
+__all__ = [
+    "BAG_10_PATTERN_A",
+    "BAG_10_PATTERN_B",
+    "COIN_ROLL_10_PATTERN_A",
+    "COIN_ROLL_10_PATTERN_B",
+    "COIN_ROLL_100_PATTERN_A",
+    "COIN_ROLL_100_PATTERN_B",
+    "COIN_ROLL_200_PATTERN_A",
+    "COIN_ROLL_200_PATTERN_B",
+    "COIN_ROLL_50_PATTERN_A",
+    "COIN_ROLL_50_PATTERN_B",
+]
