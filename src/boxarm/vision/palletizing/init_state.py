@@ -56,6 +56,7 @@ class _InitStateMixin:
         sin decir de que camara viene hacia imposible confirmar a ojo si
         una camara puntual dejo de contar."""
         self._cfg = cfg
+        self._cam_tag = cam_tag
         prefix = f"[{cam_tag}] " if cam_tag else ""
         self._log = _CameraLoggerAdapter(logger, {"prefix": prefix})
         self._homography = build_homography(pallet_pts)

@@ -9,6 +9,8 @@ gate de brazo/movimiento y el conteo (`_count_boxes`) propiamente dicho."""
 
 import logging
 
+from boxarm.history import record_pallet_completion
+
 from .formulas import _bbox_center_and_size, _bbox_max_side, _project, _split_detection
 from .templates.template_runtime import get_template_capacity
 from .types import CellState, DetectionInput, FrameInput, FrameResult, GateState, GridDetection, LevelSource
@@ -145,6 +147,10 @@ class _FrameLoopMixin:
                     "(%d caja(s) confirmada(s) se dan de baja)",
                     self._empty_frames, self.total,
                 )
+                # Vaciado real == la paleta se retiro ya cargada: es el
+                # momento de dejar constancia en el historial, ANTES de que
+                # reset_pallet() ponga total/box_class de nuevo en cero.
+                record_pallet_completion(self._box_class, self.total, self._cam_tag)
                 self.reset_pallet()
 
         # Short-circuit: paleta vacia y sin detecciones -> liberar clase y saltar logica

@@ -17,6 +17,10 @@ datasets/
 runs/
 *.local
 
+# Historial de produccion (src/boxarm/history.py): archivo local generado
+# en runtime, no un artefacto versionable.
+*.db
+
 **/.ipynb_checkpoints/
 !docker/requirements_container.txt
 
