@@ -53,6 +53,7 @@ camaras. Apagado limpio con Ctrl-C (P-16)."""
 
 import logging
 import multiprocessing as mp
+import os
 import threading
 import time
 
@@ -152,15 +153,22 @@ def run(cfg: PipelineConfig,
                          (isometric_cfg.azimuth_deg, isometric_cfg.elevation_deg),
                          isometric_cfg, drawing_cfg,
                          stream_max_fps=cfg.web.stream_max_fps)
-    t_flask = threading.Thread(
-        target=lambda: app.run(host=cfg.web.flask_host, port=cfg.web.port, threaded=True, use_reloader=False),
-        daemon=True, name="flask",
-    )
-    t_flask.start()
-    logger.info(
-        "Flask bind=%s:%d -- abra http://%s:%d/ -- Ctrl+C para salir.",
-        cfg.web.flask_host, cfg.web.port, browser_host, cfg.web.port,
-    )
+    # BOXARM_WEB_ENABLED=0 apaga solo el hilo Flask -- captura, conteo,
+    # colas y _JpegStore/_SceneStore siguen igual. Existe para el cliente
+    # de escritorio (boxarm-qt/app/): con dos consumidores del mismo
+    # pipeline (dashboard web + Qt) no siempre hace falta servir HTTP.
+    if os.environ.get("BOXARM_WEB_ENABLED", "1") != "0":
+        t_flask = threading.Thread(
+            target=lambda: app.run(host=cfg.web.flask_host, port=cfg.web.port, threaded=True, use_reloader=False),
+            daemon=True, name="flask",
+        )
+        t_flask.start()
+        logger.info(
+            "Flask bind=%s:%d -- abra http://%s:%d/ -- Ctrl+C para salir.",
+            cfg.web.flask_host, cfg.web.port, browser_host, cfg.web.port,
+        )
+    else:
+        logger.info("BOXARM_WEB_ENABLED=0 -- dashboard web desactivado, Flask no arranca")
 
     recording_threads: list[threading.Thread] = []
     if cfg.recording.type_enabled("iso") or cfg.recording.type_enabled("dashboard"):
