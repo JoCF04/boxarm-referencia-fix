@@ -7,6 +7,7 @@ colors:
   new:        [0, 255, 0]      # verde -> caja nueva confirmada
   redet:      [255, 200, 0]    # amarillo -> re-deteccion de caja ya contada
   pending:    [0, 0, 255]      # rojo -> rechazada / fuera de rango
+  bootstrap:  [0, 165, 255]    # naranja -> paleta nueva sin inventario inicial reconciliado todavia (transitorio, no error)
   roi:        [255, 200, 0]
   text:       [255, 255, 255]
   hud_title:  [0, 210, 255]

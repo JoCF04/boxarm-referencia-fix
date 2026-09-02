@@ -278,6 +278,7 @@ class DrawingConfig:
     color_new: Color
     color_redet: Color
     color_pending: Color
+    color_bootstrap: Color
     color_roi: Color
     color_text: Color
     color_hud_title: Color
@@ -909,6 +910,7 @@ def load_drawing_config(config_path: Path) -> DrawingConfig:
             color_new=_color(colors["new"]),
             color_redet=_color(colors["redet"]),
             color_pending=_color(colors["pending"]),
+            color_bootstrap=_color(colors["bootstrap"]),
             color_roi=_color(colors["roi"]),
             color_text=_color(colors["text"]),
             color_hud_title=_color(colors["hud_title"]),

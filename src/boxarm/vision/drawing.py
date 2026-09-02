@@ -69,7 +69,10 @@ def draw_grid_detections(frame: np.ndarray, results: list[GridDetection], cfg: D
     (mismo formato que el ISO) y solo la caja NUEVA se marca aparte.
     Las rechazadas van en rojo con el codigo del motivo, no la razon
     completa: con varias rechazadas superpuestas un texto largo por caja
-    se vuelve ilegible."""
+    se vuelve ilegible. Excepcion: "evidencia-bootstrap" (paleta nueva
+    reconciliando su inventario inicial) va en naranja -- es un estado
+    transitorio esperado, no un rechazo por error, y el rojo lo confundia
+    con uno."""
     for res in results:
         # Una observacion parcial usada para probar la relacion i -> i+1 no
         # es una caja dibujable. Pintarla produciria precisamente el bloque
@@ -78,7 +81,14 @@ def draw_grid_detections(frame: np.ndarray, results: list[GridDetection], cfg: D
             continue
         x1, y1, x2, y2 = res.bbox
         if res.state is CellState.REJECTED:
-            col = cfg.color_pending
+            # "evidencia-bootstrap" no es un rechazo por error: es una caja
+            # de una paleta nueva cuyo inventario inicial todavia se esta
+            # reconciliando (ver frame_loop.py, bloque `not
+            # self._bootstrap_reconciled`). Pintarla del mismo rojo que un
+            # solape real o una celda fuera de rango la hacia indistinguible
+            # de un falso positivo a simple vista -- solo el texto chico del
+            # motivo lo aclaraba.
+            col = cfg.color_bootstrap if res.reason == "evidencia-bootstrap" else cfg.color_pending
             conf_txt = f" {res.confidence:.2f}" if res.confidence is not None else ""
             label      = f"{res.reason or '?'}{conf_txt}"
             text_color = col
